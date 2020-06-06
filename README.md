@@ -11,14 +11,13 @@ add package from git url
 
 ```cs
 // 最小構成
-var process = Scenes.AddProcess.Load(sceneName);
+var process = Scenes.Add.Load(sceneName);
 await process.Execute();
 ```
 
 ```cs
 // フェードイン/アウトやローディングゲージに対応できる。
-var process = Scenes.SwitchProcess.Load(sceneName);
-ShowProgressBar(process.loadOperation);
+var process = Scenes.SwitchProcess.Load(sceneName, IProgress);
 await DoFadeOut();
 await process.Execute();
 await DoFadeIn();

@@ -36,25 +36,29 @@ namespace TSKT.Scenes
         }
     }
 
-    public readonly struct AddProcess
+    public readonly struct Add
     {
         readonly string sceneName;
-        public readonly AsyncOperation loadOperation;
+        readonly AsyncOperation loadOperation;
 
-        AddProcess(string sceneName, AsyncOperation loadOperation)
+        Add(string sceneName, AsyncOperation loadOperation)
         {
             this.sceneName = sceneName;
             this.loadOperation = loadOperation;
         }
 
-        static public AddProcess Load(string sceneName)
+        static public Add Load(string sceneName, System.IProgress<float> progress = null)
         {
             var loadOperation = SceneManager.LoadSceneAsync(
                 sceneName,
                 LoadSceneMode.Additive);
+            if (progress != null)
+            {
+                loadOperation.ToUniTask(progress);
+            }
             loadOperation.allowSceneActivation = false;
 
-            return new AddProcess(sceneName, loadOperation);
+            return new Add(sceneName, loadOperation);
         }
 
         public async UniTask Execute()
@@ -65,23 +69,22 @@ namespace TSKT.Scenes
         }
     }
 
-    public readonly struct SwitchProcess
+    public readonly struct Switch
     {
         readonly Scene toUnload;
-        readonly AddProcess add;
-        public AsyncOperation LoadOperation => add.loadOperation;
+        readonly Add add;
 
-        SwitchProcess(Scene from, AddProcess addScene)
+        Switch(Scene from, Add addScene)
         {
             toUnload = from;
             add = addScene;
         }
-        public static SwitchProcess Load(string sceneName)
+        public static Switch Load(string sceneName, System.IProgress<float> progress = null)
         {
             var fromScene = SceneManager.GetActiveScene();
-            var addScene = AddProcess.Load(sceneName);
+            var addScene = Add.Load(sceneName, progress);
 
-            return new SwitchProcess(fromScene, addScene);
+            return new Switch(fromScene, addScene);
         }
 
         public async UniTask Execute()
@@ -92,20 +95,19 @@ namespace TSKT.Scenes
         }
     }
 
-    public readonly struct SwitchWithRevertableProcess
+    public readonly struct SwitchWithRevertable
     {
         readonly Scene toRevert;
-        readonly AddProcess add;
-        public AsyncOperation LoadOperation => add.loadOperation;
+        readonly Add add;
 
-        static public SwitchWithRevertableProcess Load(string sceneName)
+        static public SwitchWithRevertable Load(string sceneName, System.IProgress<float> progress = null)
         {
             var fromScene = SceneManager.GetActiveScene();
-            var addScene = AddProcess.Load(sceneName);
-            return new SwitchWithRevertableProcess(fromScene, addScene);
+            var addScene = Add.Load(sceneName, progress);
+            return new SwitchWithRevertable(fromScene, addScene);
         }
 
-        SwitchWithRevertableProcess(Scene from, AddProcess addScene)
+        SwitchWithRevertable(Scene from, Add addScene)
         {
             toRevert = from;
             add = addScene;
@@ -132,29 +134,19 @@ namespace TSKT.Scenes
         }
     }
 
-    public readonly struct ReloadProcess
+    public readonly struct Reload
     {
-        readonly int sceneIndex;
-        public readonly AsyncOperation loadOperation;
-
-        static public async UniTask<ReloadProcess> Start()
+        static public async UniTask Start(System.IProgress<float> progress = null)
         {
             var scene = SceneManager.GetActiveScene();
             var sceneIndex = scene.buildIndex;
             await SceneManager.UnloadSceneAsync(scene);
+
             var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
-
-            return new ReloadProcess(loadOperation, sceneIndex);
-        }
-
-        ReloadProcess(AsyncOperation loadOperation, int sceneIndex)
-        {
-            this.loadOperation = loadOperation;
-            this.sceneIndex = sceneIndex;
-        }
-
-        public async UniTask Finish()
-        {
+            if (progress != null)
+            {
+                loadOperation.ToUniTask(progress).Forget();
+            }
             await loadOperation;
             SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
             _ = Resources.UnloadUnusedAssets();
