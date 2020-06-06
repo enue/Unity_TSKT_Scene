@@ -134,9 +134,9 @@ namespace TSKT.Scenes
         }
     }
 
-    public readonly struct Reload
+    public static class Reload
     {
-        static public async UniTask Start(System.IProgress<float> progress = null)
+        static public async UniTask Execute(System.IProgress<float> progress = null)
         {
             var scene = SceneManager.GetActiveScene();
             var sceneIndex = scene.buildIndex;
