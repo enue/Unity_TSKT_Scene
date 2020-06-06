@@ -5,6 +5,8 @@ Unity Package Manager
 add package from git url
 
 + `https://github.com/Cysharp/UniTask.git?path=Assets/UniRx.Async`
++ `https://github.com/enue/Unity_TSKT_Editor.git?path=Assets/Package`
++ `https://github.com/enue/Unity_TSKT_File.git?path=Assets/Package`
 + `https://github.com/enue/Unity_TSKT_Scene.git?path=Assets/Package`
 
 # usage
@@ -16,8 +18,8 @@ await process.Execute();
 ```
 
 ```cs
-// フェードイン/アウトやローディングゲージに対応できる。
-var process = Scenes.SwitchProcess.Load(sceneName, IProgress);
+// フェードイン/アウトに対応できる。
+var process = Scenes.Switch.Load(sceneName);
 await DoFadeOut();
 await process.Execute();
 await DoFadeIn();

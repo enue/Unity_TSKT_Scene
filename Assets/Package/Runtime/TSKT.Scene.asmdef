@@ -1,7 +1,8 @@
 {
     "name": "TSKT.Scene",
     "references": [
-        "UniTask"
+        "UniTask",
+        "TSKTFile"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

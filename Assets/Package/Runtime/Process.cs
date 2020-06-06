@@ -47,16 +47,14 @@ namespace TSKT.Scenes
             this.loadOperation = loadOperation;
         }
 
-        static public Add Load(string sceneName, System.IProgress<float> progress = null)
+        static public Add Load(string sceneName)
         {
             var loadOperation = SceneManager.LoadSceneAsync(
                 sceneName,
                 LoadSceneMode.Additive);
-            if (progress != null)
-            {
-                loadOperation.ToUniTask(progress);
-            }
             loadOperation.allowSceneActivation = false;
+
+            LoadingProgress.Instance.Add(loadOperation, 0.9f);
 
             return new Add(sceneName, loadOperation);
         }
@@ -79,10 +77,10 @@ namespace TSKT.Scenes
             toUnload = from;
             add = addScene;
         }
-        public static Switch Load(string sceneName, System.IProgress<float> progress = null)
+        public static Switch Load(string sceneName)
         {
             var fromScene = SceneManager.GetActiveScene();
-            var addScene = Add.Load(sceneName, progress);
+            var addScene = Add.Load(sceneName);
 
             return new Switch(fromScene, addScene);
         }
@@ -100,10 +98,10 @@ namespace TSKT.Scenes
         readonly Scene toRevert;
         readonly Add add;
 
-        static public SwitchWithRevertable Load(string sceneName, System.IProgress<float> progress = null)
+        static public SwitchWithRevertable Load(string sceneName)
         {
             var fromScene = SceneManager.GetActiveScene();
-            var addScene = Add.Load(sceneName, progress);
+            var addScene = Add.Load(sceneName);
             return new SwitchWithRevertable(fromScene, addScene);
         }
 
@@ -143,10 +141,7 @@ namespace TSKT.Scenes
             await SceneManager.UnloadSceneAsync(scene);
 
             var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
-            if (progress != null)
-            {
-                loadOperation.ToUniTask(progress).Forget();
-            }
+            LoadingProgress.Instance.Add(loadOperation, 1f);
             await loadOperation;
             SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
             _ = Resources.UnloadUnusedAssets();
