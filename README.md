@@ -24,3 +24,8 @@ await DoFadeOut();
 await process.Execute();
 await DoFadeIn();
 ```
+
+```cs
+// ローディングゲージ表示
+image.fillAmount = LoadingProgress.Instance.GetProgress();
+```
