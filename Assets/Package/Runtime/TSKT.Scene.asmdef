@@ -2,7 +2,8 @@
     "name": "TSKT.Scene",
     "references": [
         "UniTask",
-        "TSKTFile"
+        "TSKTFile",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
