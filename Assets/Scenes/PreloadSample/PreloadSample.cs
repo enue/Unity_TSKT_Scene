@@ -13,11 +13,20 @@ namespace TSKT
         void Start()
         {
             Debug.Log("start");
-            Scenes.SceneUtil.Preload("PreloadSample");
-            Scenes.SceneUtil.Preload("PreloadSample3");
-            Scenes.SceneUtil.Preload("PreloadSample2");
+            StartCoroutine(LoadCoroutine());
+        }
 
-            Scenes.SceneUtil.Load("PreloadSample2");
+        IEnumerator LoadCoroutine()
+        {
+            Scenes.Preload.Create("PreloadSample");
+            Scenes.Preload.Create("PreloadSample2");
+            Scenes.Preload.Create("PreloadSample3");
+
+            yield return Resources.LoadAsync<Sprite>("Square");
+
+            Scenes.Add.Load("PreloadSample2").Execute();
+            Scenes.Preload.Create("PreloadSample");
+            Scenes.Add.Load("PreloadSample2").Execute();
         }
     }
 }

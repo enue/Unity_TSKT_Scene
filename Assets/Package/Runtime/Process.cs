@@ -6,58 +6,66 @@ using Cysharp.Threading.Tasks;
 
 namespace TSKT.Scenes
 {
-    public static class SceneUtil
+    public readonly struct Preload
     {
-        readonly static List<(string scene, AsyncOperation operation)> sceneLoadOperations = new List<(string, AsyncOperation)>();
+        readonly static Dictionary<string, Preload> sceneLoadOperations = new Dictionary<string, Preload>();
 
-        static public int Preload(string sceneName)
+        public readonly AsyncOperation operation;
+        readonly List<GameObject> shouldActivateObjects;
+
+        public static void Create(string sceneName)
         {
-            var index = sceneLoadOperations.FindIndex(_ => _.scene == sceneName);
-
-            if (index < 0)
+            if (!sceneLoadOperations.ContainsKey(sceneName))
             {
-                var loadOperation = SceneManager.LoadSceneAsync(
-                    sceneName,
-                    LoadSceneMode.Additive);
-                loadOperation.allowSceneActivation = false;
-                sceneLoadOperations.Add((sceneName, loadOperation));
-
-                index = sceneLoadOperations.Count - 1;
+                var obj = new Preload(sceneName);
+                sceneLoadOperations.Add(sceneName, obj);
             }
-            return index;
         }
 
-        static public AsyncOperation Load(string sceneName)
+        public static bool TryPop(string sceneName, out Preload result)
         {
-            var index = Preload(sceneName);
-
-            for (int i = 0; i < index; ++i)
+            if (sceneLoadOperations.TryGetValue(sceneName, out result))
             {
-                var (scene, operation) = sceneLoadOperations[i];
-                operation.allowSceneActivation = true;
-
-                void UnloadUnnecessaryScene(Scene loadedScene, LoadSceneMode _)
-                {
-                    if (loadedScene.name == scene)
-                    {
-                        foreach(var it in loadedScene.GetRootGameObjects())
-                        {
-                            it.SetActive(false);
-                        }
-                        SceneManager.UnloadSceneAsync(loadedScene);
-                        SceneManager.sceneLoaded -= UnloadUnnecessaryScene;
-                    }
-                }
-
-                SceneManager.sceneLoaded += UnloadUnnecessaryScene;
+                sceneLoadOperations.Remove(sceneName);
+                return true;
             }
+            return false;
+        }
 
-            var result = sceneLoadOperations[index].operation;
-            result.allowSceneActivation = true;
+        Preload(string sceneName)
+        {
+            operation = SceneManager.LoadSceneAsync(
+                sceneName,
+                LoadSceneMode.Additive);
+            shouldActivateObjects = new List<GameObject>();
 
-            sceneLoadOperations.RemoveRange(0, index + 1);
+            var activeObjects = shouldActivateObjects;
+            SceneManager.sceneLoaded += DeactiveScene;
 
-            return result;
+            void DeactiveScene(Scene loadedScene, LoadSceneMode _)
+            {
+                if (loadedScene.name == sceneName)
+                {
+                    var rootObjects = loadedScene.GetRootGameObjects();
+                    foreach (var it in rootObjects)
+                    {
+                        if (it.activeSelf)
+                        {
+                            activeObjects.Add(it);
+                        }
+                        it.SetActive(false);
+                    }
+                    SceneManager.sceneLoaded -= DeactiveScene;
+                }
+            }
+        }
+
+        public void Activate()
+        {
+            foreach (var it in shouldActivateObjects)
+            {
+                it.SetActive(true);
+            }
         }
     }
 
@@ -94,27 +102,39 @@ namespace TSKT.Scenes
     public readonly struct Add
     {
         readonly string sceneName;
-        readonly AsyncOperation loadOperation;
+        readonly Preload? loadOperation;
+        readonly AsyncOperation operation;
 
-        Add(string sceneName, AsyncOperation loadOperation)
+        Add(string sceneName, Preload? loadOperation, AsyncOperation operation)
         {
             this.sceneName = sceneName;
             this.loadOperation = loadOperation;
+            this.operation = operation;
         }
 
         static public Add Load(string sceneName)
         {
-            var loadOperation = SceneUtil.Load(sceneName);
-            loadOperation.allowSceneActivation = false;
-            LoadingProgress.Instance.Add(loadOperation, 0.9f);
-
-            return new Add(sceneName, loadOperation);
+            if (Preload.TryPop(sceneName, out var preload))
+            {
+                LoadingProgress.Instance.Add(preload.operation, 1.0f);
+                return new Add(sceneName, preload, preload.operation);
+            }
+            else
+            {
+                var loadOperation = SceneManager.LoadSceneAsync(
+                    sceneName,
+                    LoadSceneMode.Additive);
+                loadOperation.allowSceneActivation = false;
+                LoadingProgress.Instance.Add(loadOperation, 0.9f);
+                return new Add(sceneName, default, loadOperation);
+            }
         }
 
         public async UniTask Execute()
         {
-            loadOperation.allowSceneActivation = true;
-            await loadOperation;
+            operation.allowSceneActivation = true;
+            await operation;
+            loadOperation?.Activate();
             SceneManager.SetActiveScene(SceneManager.GetSceneByName(sceneName));
         }
     }
