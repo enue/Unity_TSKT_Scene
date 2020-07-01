@@ -6,6 +6,32 @@ using Cysharp.Threading.Tasks;
 
 namespace TSKT.Scenes
 {
+    public static class SceneUtil
+    {
+        readonly static Dictionary<string, AsyncOperation> sceneLoadOperations = new Dictionary<string, AsyncOperation>();
+
+        static public void Preload(string sceneName)
+        {
+            if (!sceneLoadOperations.ContainsKey(sceneName))
+            {
+                var loadOperation = SceneManager.LoadSceneAsync(
+                    sceneName,
+                    LoadSceneMode.Additive);
+                loadOperation.allowSceneActivation = false;
+
+                sceneLoadOperations.Add(sceneName, loadOperation);
+            }
+        }
+
+        static public AsyncOperation Load(string sceneName)
+        {
+            Preload(sceneName);
+            var loadOperation = sceneLoadOperations[sceneName];
+            sceneLoadOperations.Remove(sceneName);
+            return loadOperation;
+        }
+    }
+
     public readonly struct Revertable
     {
         readonly Scene toActivate;
@@ -49,11 +75,7 @@ namespace TSKT.Scenes
 
         static public Add Load(string sceneName)
         {
-            var loadOperation = SceneManager.LoadSceneAsync(
-                sceneName,
-                LoadSceneMode.Additive);
-            loadOperation.allowSceneActivation = false;
-
+            var loadOperation = SceneUtil.Load(sceneName);
             LoadingProgress.Instance.Add(loadOperation, 0.9f);
 
             return new Add(sceneName, loadOperation);
