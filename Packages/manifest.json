@@ -6,7 +6,7 @@
     "com.unity.addressables": "1.8.4",
     "com.unity.collab-proxy": "1.2.16",
     "com.unity.ide.rider": "1.1.4",
-    "com.unity.ide.vscode": "1.2.0",
+    "com.unity.ide.vscode": "1.2.1",
     "com.unity.test-framework": "1.1.14",
     "com.unity.textmeshpro": "2.0.1",
     "com.unity.timeline": "1.2.14",
@@ -42,19 +42,5 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
-  },
-  "lock": {
-    "com.cysharp.unitask": {
-      "revision": "HEAD",
-      "hash": "265f88584bf740a227e7a06e401b5fe2e8bc236a"
-    },
-    "com.github.enue.tskt_editor": {
-      "revision": "HEAD",
-      "hash": "e6dd443e0f609870bf66ff46fa8a3ec3fb716d1a"
-    },
-    "com.github.enue.tskt_file": {
-      "revision": "HEAD",
-      "hash": "4b82f3a62d9111eb7cbcae94f6215a60a660e608"
-    }
   }
 }
