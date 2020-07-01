@@ -18,6 +18,9 @@ await process.Execute();
 ```
 
 ```cs
+// 暇なときにプリロードしておく
+Scenes.Preload.Create(sceneName);
+
 // フェードイン/アウトに対応できる。
 var process = Scenes.Switch.Load(sceneName);
 await DoFadeOut();
