@@ -8,27 +8,56 @@ namespace TSKT.Scenes
 {
     public static class SceneUtil
     {
-        readonly static Dictionary<string, AsyncOperation> sceneLoadOperations = new Dictionary<string, AsyncOperation>();
+        readonly static List<(string scene, AsyncOperation operation)> sceneLoadOperations = new List<(string, AsyncOperation)>();
 
-        static public void Preload(string sceneName)
+        static public int Preload(string sceneName)
         {
-            if (!sceneLoadOperations.ContainsKey(sceneName))
+            var index = sceneLoadOperations.FindIndex(_ => _.scene == sceneName);
+
+            if (index < 0)
             {
                 var loadOperation = SceneManager.LoadSceneAsync(
                     sceneName,
                     LoadSceneMode.Additive);
                 loadOperation.allowSceneActivation = false;
+                sceneLoadOperations.Add((sceneName, loadOperation));
 
-                sceneLoadOperations.Add(sceneName, loadOperation);
+                index = sceneLoadOperations.Count - 1;
             }
+            return index;
         }
 
         static public AsyncOperation Load(string sceneName)
         {
-            Preload(sceneName);
-            var loadOperation = sceneLoadOperations[sceneName];
-            sceneLoadOperations.Remove(sceneName);
-            return loadOperation;
+            var index = Preload(sceneName);
+
+            for (int i = 0; i < index; ++i)
+            {
+                var (scene, operation) = sceneLoadOperations[i];
+                operation.allowSceneActivation = true;
+
+                void UnloadUnnecessaryScene(Scene loadedScene, LoadSceneMode _)
+                {
+                    if (loadedScene.name == scene)
+                    {
+                        foreach(var it in loadedScene.GetRootGameObjects())
+                        {
+                            it.SetActive(false);
+                        }
+                        SceneManager.UnloadSceneAsync(loadedScene);
+                        SceneManager.sceneLoaded -= UnloadUnnecessaryScene;
+                    }
+                }
+
+                SceneManager.sceneLoaded += UnloadUnnecessaryScene;
+            }
+
+            var result = sceneLoadOperations[index].operation;
+            result.allowSceneActivation = true;
+
+            sceneLoadOperations.RemoveRange(0, index + 1);
+
+            return result;
         }
     }
 
@@ -76,6 +105,7 @@ namespace TSKT.Scenes
         static public Add Load(string sceneName)
         {
             var loadOperation = SceneUtil.Load(sceneName);
+            loadOperation.allowSceneActivation = false;
             LoadingProgress.Instance.Add(loadOperation, 0.9f);
 
             return new Add(sceneName, loadOperation);
