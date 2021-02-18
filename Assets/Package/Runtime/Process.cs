@@ -60,7 +60,7 @@ namespace TSKT.Scenes
             }
         }
 
-        public void Activate()
+        readonly public void Activate()
         {
             foreach (var it in shouldActivateObjects)
             {
@@ -80,7 +80,7 @@ namespace TSKT.Scenes
             this.shouldActivateObjects = shouldActivateObjects.ToArray();
         }
 
-        public async UniTask Revert()
+        readonly public async UniTask Revert()
         {
             var currentScene = SceneManager.GetActiveScene();
 
@@ -130,7 +130,7 @@ namespace TSKT.Scenes
             }
         }
 
-        public async UniTask Execute()
+        readonly public async UniTask Execute()
         {
             operation.allowSceneActivation = true;
             await operation;
@@ -157,7 +157,7 @@ namespace TSKT.Scenes
             return new Switch(fromScene, addScene);
         }
 
-        public async UniTask Execute()
+        readonly public async UniTask Execute()
         {
             await add.Execute();
             await SceneManager.UnloadSceneAsync(toUnload);
@@ -183,13 +183,13 @@ namespace TSKT.Scenes
             add = addScene;
         }
 
-        public async UniTask<Revertable> Execute()
+        readonly public async UniTask<Revertable> Execute()
         {
             await add.Execute();
             return new Revertable(toRevert, DisableAllObjects(toRevert));
         }
 
-        static List<GameObject> DisableAllObjects(Scene scene)
+        static List<GameObject> DisableAllObjects(in Scene scene)
         {
             var result = new List<GameObject>();
             foreach (var it in scene.GetRootGameObjects())
