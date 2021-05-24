@@ -207,7 +207,7 @@ namespace TSKT.Scenes
 
     public static class Reload
     {
-        static public async UniTask Execute(System.IProgress<float> progress = null)
+        static public async UniTask Execute()
         {
             var scene = SceneManager.GetActiveScene();
             var sceneIndex = scene.buildIndex;
