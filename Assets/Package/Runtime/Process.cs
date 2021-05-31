@@ -7,69 +7,6 @@ using Cysharp.Threading.Tasks;
 
 namespace TSKT.Scenes
 {
-    public readonly struct Preload
-    {
-        readonly static Dictionary<string, Preload> sceneLoadOperations = new Dictionary<string, Preload>();
-
-        public readonly AsyncOperation operation;
-        readonly List<GameObject> shouldActivateObjects;
-
-        public static void Create(string sceneName)
-        {
-            if (!sceneLoadOperations.ContainsKey(sceneName))
-            {
-                var obj = new Preload(sceneName);
-                sceneLoadOperations.Add(sceneName, obj);
-            }
-        }
-
-        public static bool TryPop(string sceneName, out Preload result)
-        {
-            if (sceneLoadOperations.TryGetValue(sceneName, out result))
-            {
-                sceneLoadOperations.Remove(sceneName);
-                return true;
-            }
-            return false;
-        }
-
-        Preload(string sceneName)
-        {
-            operation = SceneManager.LoadSceneAsync(
-                sceneName,
-                LoadSceneMode.Additive);
-            shouldActivateObjects = new List<GameObject>();
-
-            var activeObjects = shouldActivateObjects;
-            SceneManager.sceneLoaded += DeactiveScene;
-
-            void DeactiveScene(Scene loadedScene, LoadSceneMode _)
-            {
-                if (loadedScene.name == sceneName)
-                {
-                    var rootObjects = loadedScene.GetRootGameObjects();
-                    foreach (var it in rootObjects)
-                    {
-                        if (it.activeSelf)
-                        {
-                            activeObjects.Add(it);
-                        }
-                        it.SetActive(false);
-                    }
-                    SceneManager.sceneLoaded -= DeactiveScene;
-                }
-            }
-        }
-
-        readonly public void Activate()
-        {
-            foreach (var it in shouldActivateObjects)
-            {
-                it.SetActive(true);
-            }
-        }
-    }
-
     public readonly struct Revertable
     {
         readonly Scene toActivate;
@@ -103,39 +40,28 @@ namespace TSKT.Scenes
     public readonly struct Add
     {
         readonly string sceneName;
-        readonly Preload? loadOperation;
         readonly AsyncOperation operation;
 
-        Add(string sceneName, Preload? loadOperation, AsyncOperation operation)
+        Add(string sceneName, AsyncOperation operation)
         {
             this.sceneName = sceneName;
-            this.loadOperation = loadOperation;
             this.operation = operation;
         }
 
         static public Add Load(string sceneName)
         {
-            if (Preload.TryPop(sceneName, out var preload))
-            {
-                LoadingProgress.Instance.Add(preload.operation, 1.0f);
-                return new Add(sceneName, preload, preload.operation);
-            }
-            else
-            {
-                var loadOperation = SceneManager.LoadSceneAsync(
-                    sceneName,
-                    LoadSceneMode.Additive);
-                loadOperation.allowSceneActivation = false;
-                LoadingProgress.Instance.Add(loadOperation, 0.9f);
-                return new Add(sceneName, default, loadOperation);
-            }
+            var loadOperation = SceneManager.LoadSceneAsync(
+                sceneName,
+                LoadSceneMode.Additive);
+            loadOperation.allowSceneActivation = false;
+            LoadingProgress.Instance.Add(loadOperation, 0.9f);
+            return new Add(sceneName, loadOperation);
         }
 
         readonly public async UniTask Execute()
         {
             operation.allowSceneActivation = true;
             await operation;
-            loadOperation?.Activate();
             SceneManager.SetActiveScene(SceneManager.GetSceneByName(sceneName));
         }
     }
