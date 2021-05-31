@@ -9,21 +9,21 @@ namespace TSKT.Scenes
 {
     public readonly struct Revertable
     {
+        readonly Scene toUnload;
         readonly Scene toActivate;
         readonly GameObject[] shouldActivateObjects;
 
-        public Revertable(Scene from, List<GameObject> shouldActivateObjects)
+        public Revertable(Scene toUnload, Scene toActivate, GameObject[] shouldActivateObjects)
         {
-            toActivate = from;
-            this.shouldActivateObjects = shouldActivateObjects.ToArray();
+            this.toUnload = toUnload;
+            this.toActivate = toActivate;
+            this.shouldActivateObjects = shouldActivateObjects;
         }
 
-        readonly public async UniTask Revert()
+        readonly public void Revert()
         {
-            var currentScene = SceneManager.GetActiveScene();
-
             SceneManager.SetActiveScene(toActivate);
-            await SceneManager.UnloadSceneAsync(currentScene);
+            _ = SceneManager.UnloadSceneAsync(toUnload);
 
             foreach (var it in shouldActivateObjects)
             {
@@ -58,11 +58,13 @@ namespace TSKT.Scenes
             return new Add(sceneName, loadOperation);
         }
 
-        readonly public async UniTask Execute()
+        readonly public async UniTask<Scene> Execute()
         {
             operation.allowSceneActivation = true;
             await operation;
-            SceneManager.SetActiveScene(SceneManager.GetSceneByName(sceneName));
+            var scene = SceneManager.GetSceneByName(sceneName);
+            SceneManager.SetActiveScene(scene);
+            return scene;
         }
     }
 
@@ -112,8 +114,8 @@ namespace TSKT.Scenes
 
         readonly public async UniTask<Revertable> Execute()
         {
-            await add.Execute();
-            return new Revertable(toRevert, DisableAllObjects(toRevert));
+            var added = await add.Execute();
+            return new Revertable(added, toRevert, DisableAllObjects(toRevert));
         }
 
         static GameObject[] DisableAllObjects(in Scene scene)
