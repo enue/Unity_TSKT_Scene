@@ -116,18 +116,20 @@ namespace TSKT.Scenes
             return new Revertable(toRevert, DisableAllObjects(toRevert));
         }
 
-        static List<GameObject> DisableAllObjects(in Scene scene)
+        static GameObject[] DisableAllObjects(in Scene scene)
         {
-            var result = new List<GameObject>();
-            foreach (var it in scene.GetRootGameObjects())
+            using (UnityEngine.Pool.ListPool<GameObject>.Get(out var result))
             {
-                if (it.activeSelf)
+                foreach (var it in scene.GetRootGameObjects())
                 {
-                    result.Add(it);
+                    if (it.activeSelf)
+                    {
+                        result.Add(it);
+                    }
+                    it.SetActive(false);
                 }
-                it.SetActive(false);
+                return result.ToArray();
             }
-            return result;
         }
     }
 
