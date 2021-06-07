@@ -78,6 +78,11 @@ namespace TSKT.Scenes
             toUnload = from;
             add = addScene;
         }
+        public static Switch Load(string sceneName, Scene toUnload)
+        {
+            var addScene = Add.Load(sceneName);
+            return new Switch(toUnload, addScene);
+        }
         public static Switch Load(string sceneName)
         {
             var fromScene = SceneManager.GetActiveScene();
@@ -86,11 +91,19 @@ namespace TSKT.Scenes
             return new Switch(fromScene, addScene);
         }
 
-        readonly public async UniTask Execute()
+        readonly public async UniTask Execute(bool waitUnload = true)
         {
             await add.Execute();
-            await SceneManager.UnloadSceneAsync(toUnload);
-            _ = Resources.UnloadUnusedAssets();
+            if (waitUnload)
+            {
+                await SceneManager.UnloadSceneAsync(toUnload);
+                _ = Resources.UnloadUnusedAssets();
+            }
+            else
+            {
+                _ = SceneManager.UnloadSceneAsync(toUnload).ToUniTask()
+                    .ContinueWith(Resources.UnloadUnusedAssets);
+            }
         }
     }
 
@@ -98,6 +111,12 @@ namespace TSKT.Scenes
     {
         readonly Scene toRevert;
         readonly Add add;
+
+        static public SwitchWithRevertable Load(string sceneName, Scene currentScene)
+        {
+            var addScene = Add.Load(sceneName);
+            return new SwitchWithRevertable(currentScene, addScene);
+        }
 
         static public SwitchWithRevertable Load(string sceneName)
         {
