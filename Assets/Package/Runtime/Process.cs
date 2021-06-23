@@ -118,13 +118,6 @@ namespace TSKT.Scenes
             return new SwitchWithRevertable(currentScene, addScene);
         }
 
-        static public SwitchWithRevertable Load(string sceneName)
-        {
-            var fromScene = SceneManager.GetActiveScene();
-            var addScene = Add.Load(sceneName);
-            return new SwitchWithRevertable(fromScene, addScene);
-        }
-
         SwitchWithRevertable(Scene from, Add addScene)
         {
             toRevert = from;
