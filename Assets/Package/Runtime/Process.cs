@@ -116,9 +116,9 @@ namespace TSKT.Scenes
     {
         public readonly struct Revertable
         {
-            readonly Scene toUnload;
-            readonly Scene toActivate;
-            readonly InactivateObjects shouldActivateObjects;
+            public readonly Scene toUnload;
+            public readonly Scene toActivate;
+            public readonly InactivateObjects shouldActivateObjects;
 
             public Revertable(Scene toUnload, Scene toActivate, InactivateObjects shouldActivateObjects)
             {
