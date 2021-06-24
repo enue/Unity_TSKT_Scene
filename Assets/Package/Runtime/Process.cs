@@ -83,13 +83,6 @@ namespace TSKT.Scenes
             var addScene = Add.Load(sceneName);
             return new Switch(toUnload, addScene);
         }
-        public static Switch Load(string sceneName)
-        {
-            var fromScene = SceneManager.GetActiveScene();
-            var addScene = Add.Load(sceneName);
-
-            return new Switch(fromScene, addScene);
-        }
 
         readonly public async UniTask Execute(bool waitUnload = true)
         {
@@ -149,9 +142,8 @@ namespace TSKT.Scenes
 
     public static class Reload
     {
-        static public async UniTask Execute()
+        static public async UniTask Execute(Scene scene)
         {
-            var scene = SceneManager.GetActiveScene();
             var sceneIndex = scene.buildIndex;
             await SceneManager.UnloadSceneAsync(scene);
 
