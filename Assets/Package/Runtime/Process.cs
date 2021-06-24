@@ -7,24 +7,22 @@ using Cysharp.Threading.Tasks;
 
 namespace TSKT.Scenes
 {
-    public readonly struct Revertable
+    public readonly struct InactivateObjects
     {
-        readonly Scene toUnload;
-        readonly Scene toActivate;
         readonly GameObject[] shouldActivateObjects;
 
-        public Revertable(Scene toUnload, Scene toActivate, GameObject[] shouldActivateObjects)
+        InactivateObjects(Scene scene)
         {
-            this.toUnload = toUnload;
-            this.toActivate = toActivate;
-            this.shouldActivateObjects = shouldActivateObjects;
+            shouldActivateObjects = DisableAllObjects(scene);
         }
 
-        readonly public void Revert()
+        static public InactivateObjects Inactivate(Scene scene)
         {
-            SceneManager.SetActiveScene(toActivate);
-            _ = SceneManager.UnloadSceneAsync(toUnload);
+            return new InactivateObjects(scene);
+        }
 
+        readonly public void Activate()
+        {
             foreach (var it in shouldActivateObjects)
             {
                 if (it)
@@ -32,8 +30,22 @@ namespace TSKT.Scenes
                     it.SetActive(true);
                 }
             }
+        }
 
-            _ = Resources.UnloadUnusedAssets();
+        static GameObject[] DisableAllObjects(in Scene scene)
+        {
+            using (UnityEngine.Pool.ListPool<GameObject>.Get(out var result))
+            {
+                foreach (var it in scene.GetRootGameObjects())
+                {
+                    if (it.activeSelf)
+                    {
+                        result.Add(it);
+                    }
+                    it.SetActive(false);
+                }
+                return result.ToArray();
+            }
         }
     }
 
@@ -102,6 +114,30 @@ namespace TSKT.Scenes
 
     public readonly struct SwitchWithRevertable
     {
+        public readonly struct Revertable
+        {
+            readonly Scene toUnload;
+            readonly Scene toActivate;
+            readonly InactivateObjects shouldActivateObjects;
+
+            public Revertable(Scene toUnload, Scene toActivate, InactivateObjects shouldActivateObjects)
+            {
+                this.toUnload = toUnload;
+                this.toActivate = toActivate;
+                this.shouldActivateObjects = shouldActivateObjects;
+            }
+
+            readonly public void Revert()
+            {
+                SceneManager.SetActiveScene(toActivate);
+                _ = SceneManager.UnloadSceneAsync(toUnload);
+
+                shouldActivateObjects.Activate();
+
+                _ = Resources.UnloadUnusedAssets();
+            }
+        }
+
         readonly Scene toRevert;
         readonly Add add;
 
@@ -120,23 +156,7 @@ namespace TSKT.Scenes
         readonly public async UniTask<Revertable> Execute()
         {
             var added = await add.Execute();
-            return new Revertable(added, toRevert, DisableAllObjects(toRevert));
-        }
-
-        static GameObject[] DisableAllObjects(in Scene scene)
-        {
-            using (UnityEngine.Pool.ListPool<GameObject>.Get(out var result))
-            {
-                foreach (var it in scene.GetRootGameObjects())
-                {
-                    if (it.activeSelf)
-                    {
-                        result.Add(it);
-                    }
-                    it.SetActive(false);
-                }
-                return result.ToArray();
-            }
+            return new Revertable(added, toRevert, InactivateObjects.Inactivate(toRevert));
         }
     }
 
