@@ -129,12 +129,10 @@ namespace TSKT.Scenes
 
             readonly public void Revert()
             {
-                SceneManager.SetActiveScene(toActivate);
-                _ = SceneManager.UnloadSceneAsync(toUnload);
-
-                shouldActivateObjects.Activate();
-
-                _ = Resources.UnloadUnusedAssets();
+                SwitchWithRevertable.Revert(
+                    toUnload,
+                    toActivate,
+                    shouldActivateObjects);
             }
         }
 
@@ -157,6 +155,16 @@ namespace TSKT.Scenes
         {
             var added = await add.Execute();
             return new Revertable(added, toRevert, InactivateObjects.Inactivate(toRevert));
+        }
+
+        static public void Revert(Scene toUnload, Scene toActivate, InactivateObjects objectsToActivate)
+        {
+            SceneManager.SetActiveScene(toActivate);
+            _ = SceneManager.UnloadSceneAsync(toUnload);
+
+            objectsToActivate.Activate();
+
+            _ = Resources.UnloadUnusedAssets();
         }
     }
 
