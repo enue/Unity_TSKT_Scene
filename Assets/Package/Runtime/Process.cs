@@ -98,14 +98,14 @@ namespace TSKT.Scenes
 
         readonly public async UniTask Execute(bool waitUnload = true)
         {
-            // HACK : 新シーンロード->旧シーンアンロード->新シーンアクティベートの順にしたいが、ロードがallowSceneActivation=falseのためアンロードも終えることができない（Unityの非同期処理は順に処理される仕様のため）。なのでSetActive(false)で対応する。
             foreach (var it in toUnload.GetRootGameObjects())
             {
                 it.gameObject.SetActive(false);
             }
+            var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
+
             await add.Execute();
 
-            var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
             if (waitUnload)
             {
                 await unloadTask;
