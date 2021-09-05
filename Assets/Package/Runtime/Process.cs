@@ -98,16 +98,19 @@ namespace TSKT.Scenes
 
         readonly public async UniTask Execute(bool waitUnload = true)
         {
+            var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
             await add.Execute();
+
             if (waitUnload)
             {
-                await SceneManager.UnloadSceneAsync(toUnload);
+                await unloadTask;
                 _ = Resources.UnloadUnusedAssets();
             }
             else
             {
-                _ = SceneManager.UnloadSceneAsync(toUnload).ToUniTask()
-                    .ContinueWith(Resources.UnloadUnusedAssets);
+                unloadTask.ToUniTask()
+                    .ContinueWith(Resources.UnloadUnusedAssets)
+                    .Forget();
             }
         }
     }
