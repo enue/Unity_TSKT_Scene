@@ -100,7 +100,7 @@ namespace TSKT.Scenes
         {
             foreach (var it in toUnload.GetRootGameObjects())
             {
-                it.gameObject.SetActive(false);
+                it.SetActive(false);
             }
             var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
 
