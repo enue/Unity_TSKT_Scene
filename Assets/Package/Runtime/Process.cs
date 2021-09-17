@@ -142,6 +142,11 @@ namespace TSKT.Scenes
 
             readonly public void Revert()
             {
+                UnityEngine.Assertions.Assert.IsTrue(toUnload.IsValid(), "scene to unload is invalid.");
+                Revert(toUnload);
+            }
+            readonly public void Revert(Scene toUnload)
+            {
                 SwitchWithRevertable.Revert(
                     toUnload,
                     toActivate,
