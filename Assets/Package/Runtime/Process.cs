@@ -75,6 +75,10 @@ namespace TSKT.Scenes
             operation.allowSceneActivation = true;
             await operation;
             var scene = SceneManager.GetSceneByName(sceneName);
+            if (!scene.IsValid())
+            {
+                scene = SceneManager.GetSceneByPath(sceneName);
+            }
             SceneManager.SetActiveScene(scene);
             return scene;
         }
