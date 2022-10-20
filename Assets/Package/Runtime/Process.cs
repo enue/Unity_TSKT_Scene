@@ -175,14 +175,17 @@ namespace TSKT.Scenes
             return new Revertable(added, toRevert, InactivateObjects.Inactivate(toRevert));
         }
 
-        static public void Revert(Scene toUnload, Scene toActivate, InactivateObjects objectsToActivate)
+        public static void Revert(Scene toUnload, Scene toActivate, InactivateObjects objectsToActivate)
         {
             SceneManager.SetActiveScene(toActivate);
-            _ = SceneManager.UnloadSceneAsync(toUnload);
+            foreach(var it in toUnload.GetRootGameObjects())
+            {
+                it.SetActive(false);
+            }
+            SceneManager.UnloadSceneAsync(toUnload).ToUniTask().ContinueWith(() => Resources.UnloadUnusedAssets());
 
             objectsToActivate.Activate();
 
-            _ = Resources.UnloadUnusedAssets();
         }
     }
 
