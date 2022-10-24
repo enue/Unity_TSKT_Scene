@@ -1,9 +1,9 @@
-﻿#nullable enable
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using Cysharp.Threading.Tasks;
+#nullable enable
 
 namespace TSKT.Scenes
 {
@@ -73,7 +73,7 @@ namespace TSKT.Scenes
         readonly public async UniTask<Scene> Execute()
         {
             operation.allowSceneActivation = true;
-            await operation.ToUniTask();
+            await operation;
             var scene = SceneManager.GetSceneByName(sceneName);
             if (!scene.IsValid())
             {
@@ -112,7 +112,7 @@ namespace TSKT.Scenes
 
             if (waitUnload)
             {
-                await unloadTask.ToUniTask();
+                await unloadTask;
                 _ = Resources.UnloadUnusedAssets();
             }
             else
@@ -194,11 +194,11 @@ namespace TSKT.Scenes
         static public async UniTask Execute(Scene scene)
         {
             var sceneIndex = scene.buildIndex;
-            await SceneManager.UnloadSceneAsync(scene).ToUniTask();
+            await SceneManager.UnloadSceneAsync(scene);
 
             var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
             LoadingProgress.Instance.Add(loadOperation, 1f);
-            await loadOperation.ToUniTask();
+            await loadOperation;
             SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
             _ = Resources.UnloadUnusedAssets();
         }
