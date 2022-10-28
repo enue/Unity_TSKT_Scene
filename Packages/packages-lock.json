@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1173bb4f34460ee473c93b414066d8d7436445dd"
+      "hash": "d2245bc38b78495e89c03b8f0cc43fff184835ab"
     },
     "com.github.enue.tskt_editor": {
       "version": "https://github.com/enue/Unity_TSKT_Editor.git?path=Assets/Package",
