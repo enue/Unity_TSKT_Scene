@@ -72,13 +72,18 @@ namespace TSKT.Scenes
         public readonly async UniTask<Scene> Execute(System.IProgress<float>? progress = null)
         {
             operation.allowSceneActivation = true;
-            await operation.ToUniTask(progress);
+            if (progress != null)
+            {
+                operation.ToUniTask(progress).Forget();
+            }
+            await operation;
             var scene = SceneManager.GetSceneByName(sceneName);
             if (!scene.IsValid())
             {
                 scene = SceneManager.GetSceneByPath(sceneName);
             }
-            SceneManager.SetActiveScene(scene);
+            var succeeded = SceneManager.SetActiveScene(scene);
+            UnityEngine.Assertions.Assert.IsTrue(succeeded);
             return scene;
         }
     }
@@ -196,7 +201,11 @@ namespace TSKT.Scenes
             await SceneManager.UnloadSceneAsync(scene);
 
             var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
-            await loadOperation.ToUniTask(progress);
+            if (progress != null)
+            {
+                loadOperation.ToUniTask(progress).Forget();
+            }
+            await loadOperation;
             SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
             _ = Resources.UnloadUnusedAssets();
         }
