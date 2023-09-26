@@ -62,7 +62,7 @@ namespace TSKT.Scenes
             this.changeActiveScene = changeActiveScene;
         }
 
-        public static Add Load(string sceneName, bool changeActiveScene = false)
+        public static Add Load(string sceneName, bool changeActiveScene = true)
         {
             var loadOperation = SceneManager.LoadSceneAsync(
                 sceneName,
