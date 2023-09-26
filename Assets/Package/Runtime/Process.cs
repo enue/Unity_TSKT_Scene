@@ -53,20 +53,22 @@ namespace TSKT.Scenes
     {
         readonly string sceneName;
         readonly AsyncOperation operation;
+        readonly bool changeActiveScene;
 
-        Add(string sceneName, AsyncOperation operation)
+        Add(string sceneName, AsyncOperation operation, bool changeActiveScene)
         {
             this.sceneName = sceneName;
             this.operation = operation;
+            this.changeActiveScene = changeActiveScene;
         }
 
-        public static Add Load(string sceneName)
+        public static Add Load(string sceneName, bool changeActiveScene = false)
         {
             var loadOperation = SceneManager.LoadSceneAsync(
                 sceneName,
                 LoadSceneMode.Additive);
             loadOperation.allowSceneActivation = false;
-            return new Add(sceneName, loadOperation);
+            return new Add(sceneName, loadOperation, changeActiveScene);
         }
 
         public readonly async UniTask<Scene> Execute(System.IProgress<float>? progress = null)
@@ -82,8 +84,11 @@ namespace TSKT.Scenes
             {
                 scene = SceneManager.GetSceneByPath(sceneName);
             }
-            var succeeded = SceneManager.SetActiveScene(scene);
-            UnityEngine.Assertions.Assert.IsTrue(succeeded);
+            if (changeActiveScene)
+            {
+                var succeeded = SceneManager.SetActiveScene(scene);
+                UnityEngine.Assertions.Assert.IsTrue(succeeded);
+            }
             return scene;
         }
     }
@@ -121,10 +126,7 @@ namespace TSKT.Scenes
             }
             else
             {
-                unloadTask
-                    .ToUniTask()
-                    .ContinueWith(Resources.UnloadUnusedAssets)
-                    .Forget();
+                unloadTask.completed += static _ => Resources.UnloadUnusedAssets();
             }
         }
     }
@@ -186,7 +188,7 @@ namespace TSKT.Scenes
             {
                 it.SetActive(false);
             }
-            SceneManager.UnloadSceneAsync(toUnload).ToUniTask().ContinueWith(() => Resources.UnloadUnusedAssets());
+            SceneManager.UnloadSceneAsync(toUnload).completed += static _ => Resources.UnloadUnusedAssets();
 
             objectsToActivate.Activate();
 
