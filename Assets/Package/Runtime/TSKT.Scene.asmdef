@@ -1,10 +1,7 @@
 {
     "name": "TSKT.Scene",
     "rootNamespace": "",
-    "references": [
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:84651a3751eca9349aac36a66bba901b"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -3,7 +3,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
-using Cysharp.Threading.Tasks;
 
 namespace TSKT.Scenes
 {
@@ -71,12 +70,12 @@ namespace TSKT.Scenes
             return new Add(sceneName, loadOperation, changeActiveScene);
         }
 
-        public readonly async UniTask<Scene> Execute(System.IProgress<float>? progress = null)
+        public readonly async Awaitable<Scene> Execute(System.IProgress<float>? progress = null)
         {
             operation.allowSceneActivation = true;
             if (progress != null)
             {
-                operation.ToUniTask(progress).Forget();
+                _ = ReportUtil.Report(operation, progress);
             }
             await operation;
             var scene = SceneManager.GetSceneByName(sceneName);
@@ -109,7 +108,7 @@ namespace TSKT.Scenes
             return new Switch(toUnload, addScene);
         }
 
-        public readonly async UniTask Execute(bool waitUnload = true, System.IProgress<float>? progress = null)
+        public readonly async Awaitable Execute(bool waitUnload = true, System.IProgress<float>? progress = null)
         {
             foreach (var it in toUnload.GetRootGameObjects())
             {
@@ -175,7 +174,7 @@ namespace TSKT.Scenes
             add = addScene;
         }
 
-        public readonly async UniTask<Revertable> Execute(System.IProgress<float>? progress = null)
+        public readonly async Awaitable<Revertable> Execute(System.IProgress<float>? progress = null)
         {
             var added = await add.Execute(progress);
             return new Revertable(added, toRevert, InactivateObjects.Inactivate(toRevert));
@@ -197,7 +196,7 @@ namespace TSKT.Scenes
 
     public static class Reload
     {
-        public static async UniTask Execute(Scene scene, System.IProgress<float>? progress = null)
+        public static async Awaitable Execute(Scene scene, System.IProgress<float>? progress = null)
         {
             var sceneIndex = scene.buildIndex;
             await SceneManager.UnloadSceneAsync(scene);
@@ -205,11 +204,25 @@ namespace TSKT.Scenes
             var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
             if (progress != null)
             {
-                loadOperation.ToUniTask(progress).Forget();
+                _ = ReportUtil.Report(loadOperation, progress);
             }
             await loadOperation;
             SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
             _ = Resources.UnloadUnusedAssets();
+        }
+
+    }
+
+    static class ReportUtil
+    {
+        public static async Awaitable Report(AsyncOperation operation, System.IProgress<float> progress)
+        {
+            while (!operation.isDone)
+            {
+                progress.Report(operation.progress);
+                await Awaitable.NextFrameAsync();
+            }
+            progress.Report(1f);
         }
     }
 }

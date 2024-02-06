@@ -2,11 +2,9 @@
     "name": "com.github.enue.tskt_scene",
     "displayName": "TSKT Scene",
     "version": "0.8.9",
-    "unity": "2023.1",
+    "unity": "2023.2",
     "description": "",
     "keywords": [],
     "category": "",
-    "dependencies": {
-        "com.cysharp.unitask": "2.4.1"
-    }
+    "dependencies": {}
 }
