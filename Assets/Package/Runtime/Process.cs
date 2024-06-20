@@ -113,9 +113,8 @@ namespace TSKT.Scenes
             {
                 it.SetActive(false);
             }
-            var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
-
             await add.Execute(progress);
+            var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
 
             if (waitUnload)
             {
