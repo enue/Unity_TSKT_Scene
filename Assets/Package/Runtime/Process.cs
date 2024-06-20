@@ -144,17 +144,21 @@ namespace TSKT.Scenes
                 this.shouldActivateObjects = shouldActivateObjects;
             }
 
-            public readonly async Awaitable Revert()
+            public readonly async Awaitable Revert(bool waitUnload = false)
             {
                 UnityEngine.Assertions.Assert.IsTrue(toUnload.IsValid(), "scene to unload is invalid.");
-                await Revert(toUnload);
+                await Revert(toUnload, waitUnload);
             }
-            public readonly async Awaitable Revert(Scene toUnload)
+            public readonly async Awaitable Revert(Scene toUnload, bool waitUnload = false)
             {
-                await SwitchWithRevertable.Revert(
+                var operation = SwitchWithRevertable.Revert(
                     toUnload,
                     toActivate,
                     shouldActivateObjects);
+                if (waitUnload)
+                {
+                    await operation;
+                }
             }
         }
 
