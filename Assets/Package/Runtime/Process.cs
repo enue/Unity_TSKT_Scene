@@ -95,16 +95,27 @@ namespace TSKT.Scenes
     {
         readonly Scene toUnload;
         readonly Add add;
+        readonly AsyncOperation? singleSceneOperation;
 
-        Switch(Scene from, Add addScene)
+        Switch(Scene from, Add addScene, AsyncOperation? singleSceneOperation)
         {
             toUnload = from;
             add = addScene;
+            this.singleSceneOperation = singleSceneOperation;
         }
         public static Switch Load(string sceneName, Scene toUnload)
         {
-            var addScene = Add.Load(sceneName);
-            return new Switch(toUnload, addScene);
+            if (SceneManager.sceneCount == 1)
+            {
+                var operation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+                operation.allowSceneActivation = false;
+                return new Switch(toUnload, default, operation);
+            }
+            else
+            {
+                var addScene = Add.Load(sceneName);
+                return new Switch(toUnload, addScene, null);
+            }
         }
 
         public readonly async Awaitable Execute(bool waitUnload = true, System.IProgress<float>? progress = null)
@@ -113,17 +124,30 @@ namespace TSKT.Scenes
             {
                 it.SetActive(false);
             }
-            await add.Execute(progress);
-            var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
 
-            if (waitUnload)
+            if (singleSceneOperation == null)
             {
-                await unloadTask;
-                _ = Resources.UnloadUnusedAssets();
+                await add.Execute(progress);
+                var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
+
+                if (waitUnload)
+                {
+                    await unloadTask;
+                    _ = Resources.UnloadUnusedAssets();
+                }
+                else
+                {
+                    unloadTask.completed += static _ => Resources.UnloadUnusedAssets();
+                }
             }
             else
             {
-                unloadTask.completed += static _ => Resources.UnloadUnusedAssets();
+                if (progress != null)
+                {
+                    _ = ReportUtil.Report(singleSceneOperation, progress);
+                }
+                singleSceneOperation.allowSceneActivation = true;
+                await singleSceneOperation;
             }
         }
     }
