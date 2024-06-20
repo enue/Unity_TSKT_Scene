@@ -203,15 +203,27 @@ namespace TSKT.Scenes
         public static async Awaitable Execute(Scene scene, System.IProgress<float>? progress = null)
         {
             var sceneIndex = scene.buildIndex;
-            await SceneManager.UnloadSceneAsync(scene);
 
-            var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
-            if (progress != null)
+            if (SceneManager.sceneCount == 1)
             {
-                _ = ReportUtil.Report(loadOperation, progress);
+                var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Single);
+                if (progress != null)
+                {
+                    _ = ReportUtil.Report(loadOperation, progress);
+                }
+                await loadOperation;
             }
-            await loadOperation;
-            SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
+            else
+            {
+                await SceneManager.UnloadSceneAsync(scene);
+                var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
+                if (progress != null)
+                {
+                    _ = ReportUtil.Report(loadOperation, progress);
+                }
+                await loadOperation;
+                SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
+            }
             _ = Resources.UnloadUnusedAssets();
         }
 
