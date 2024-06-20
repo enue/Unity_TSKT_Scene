@@ -85,8 +85,7 @@ namespace TSKT.Scenes
             }
             if (changeActiveScene)
             {
-                var succeeded = SceneManager.SetActiveScene(scene);
-                UnityEngine.Assertions.Assert.IsTrue(succeeded);
+                SceneManager.SetActiveScene(scene);
             }
             return scene;
         }
