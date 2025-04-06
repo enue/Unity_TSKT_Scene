@@ -3,16 +3,16 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using System;
 
 namespace TSKT.Scenes
 {
     public readonly struct InactivateObjects
     {
-        readonly GameObject[] shouldActivateObjects;
-
+        readonly int[] shouldActivateObjectInstanceIds;
         InactivateObjects(Scene scene)
         {
-            shouldActivateObjects = DisableAllObjects(scene);
+            shouldActivateObjectInstanceIds = DisableAllObjects(scene);
         }
 
         public static InactivateObjects Inactivate(Scene scene)
@@ -22,28 +22,28 @@ namespace TSKT.Scenes
 
         public readonly void Activate()
         {
-            foreach (var it in shouldActivateObjects)
-            {
-                if (it)
-                {
-                    it.SetActive(true);
-                }
-            }
+            GameObject.SetGameObjectsActive(shouldActivateObjectInstanceIds, true);
         }
 
-        static GameObject[] DisableAllObjects(in Scene scene)
+        static int[] DisableAllObjects(in Scene scene)
         {
-            using (UnityEngine.Pool.ListPool<GameObject>.Get(out var result))
+            using (UnityEngine.Pool.ListPool<GameObject>.Get(out var objects))
             {
-                foreach (var it in scene.GetRootGameObjects())
+                scene.GetRootGameObjects(objects);
+                Span<int> span = stackalloc int[objects.Count];
+                int index = 0;
+                foreach (var it in objects)
                 {
                     if (it.activeSelf)
                     {
-                        result.Add(it);
+                        span[index] = it.GetInstanceID();
                     }
-                    it.SetActive(false);
+                    ++index;
                 }
-                return result.ToArray();
+
+                var result = span[..index].ToArray();
+                GameObject.SetGameObjectsActive(result, false);
+                return result;
             }
         }
     }
