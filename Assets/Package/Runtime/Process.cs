@@ -9,10 +9,10 @@ namespace TSKT.Scenes
 {
     public readonly struct InactivateObjects
     {
-        readonly int[] shouldActivateObjectInstanceIds;
+        readonly EntityId[] shouldActivateObjectEntityIds;
         InactivateObjects(Scene scene)
         {
-            shouldActivateObjectInstanceIds = DisableAllObjects(scene);
+            shouldActivateObjectEntityIds = DisableAllObjects(scene);
         }
 
         public static InactivateObjects Inactivate(Scene scene)
@@ -22,21 +22,21 @@ namespace TSKT.Scenes
 
         public readonly void Activate()
         {
-            GameObject.SetGameObjectsActive(shouldActivateObjectInstanceIds, true);
+            GameObject.SetGameObjectsActive(shouldActivateObjectEntityIds, true);
         }
 
-        static int[] DisableAllObjects(in Scene scene)
+        static EntityId[] DisableAllObjects(in Scene scene)
         {
             using (UnityEngine.Pool.ListPool<GameObject>.Get(out var objects))
             {
                 scene.GetRootGameObjects(objects);
-                Span<int> span = stackalloc int[objects.Count];
+                Span<EntityId> span = stackalloc EntityId[objects.Count];
                 int index = 0;
                 foreach (var it in objects)
                 {
                     if (it.activeSelf)
                     {
-                        span[index] = it.GetInstanceID();
+                        span[index] = it.GetEntityId();
                     }
                     ++index;
                 }
@@ -133,7 +133,7 @@ namespace TSKT.Scenes
                 if (waitUnload)
                 {
                     await unloadTask;
-                    _ = Resources.UnloadUnusedAssets();
+                    await Resources.UnloadUnusedAssets();
                 }
                 else
                 {
