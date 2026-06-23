@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "73a63b7f672b88f7e9992f6917eb458a8cbb6fa9"
+      "hash": "e5acc106ee196bc5a32fb14cdf2987b0f96d11e0"
     },
     "com.github.enue.tskt_editor": {
       "version": "https://github.com/enue/Unity_TSKT_Editor.git?path=Assets/Package",
@@ -15,7 +15,7 @@
       "hash": "e6dd443e0f609870bf66ff46fa8a3ec3fb716d1a"
     },
     "com.unity.addressables": {
-      "version": "2.7.6",
+      "version": "2.9.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -25,13 +25,13 @@
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.imageconversion": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.scriptablebuildpipeline": "2.5.0",
+        "com.unity.scriptablebuildpipeline": "2.6.1",
         "com.unity.modules.unitywebrequestassetbundle": "1.0.0"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.ai.navigation": {
-      "version": "2.0.9",
+      "version": "2.0.13",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -40,20 +40,20 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
-      "version": "2.10.2",
+      "version": "2.12.4",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.ext.nunit": {
-      "version": "2.0.5",
+      "version": "2.1.0",
       "depth": 1,
       "source": "builtin",
       "dependencies": {}
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.26",
+      "version": "2.0.27",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -77,7 +77,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.scriptablebuildpipeline": {
-      "version": "2.5.0",
+      "version": "2.6.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -87,17 +87,17 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.6.0",
+      "version": "1.7.0",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
-        "com.unity.ext.nunit": "2.0.3",
+        "com.unity.ext.nunit": "2.1.0",
         "com.unity.modules.imgui": "1.0.0",
         "com.unity.modules.jsonserialize": "1.0.0"
       }
     },
     "com.unity.timeline": {
-      "version": "1.8.10",
+      "version": "1.8.12",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -109,12 +109,15 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ugui": {
-      "version": "2.0.0",
+      "version": "2.5.0",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
         "com.unity.modules.ui": "1.0.0",
-        "com.unity.modules.imgui": "1.0.0"
+        "com.unity.modules.imgui": "1.0.0",
+        "com.unity.modules.audio": "1.0.0",
+        "com.unity.modules.physics2d": "1.0.0",
+        "com.unity.modules.physics": "1.0.0"
       }
     },
     "com.unity.modules.accessibility": {
@@ -141,7 +144,9 @@
       "version": "1.0.0",
       "depth": 0,
       "source": "builtin",
-      "dependencies": {}
+      "dependencies": {
+        "com.unity.modules.jsonserialize": "1.0.0"
+      }
     },
     "com.unity.modules.animation": {
       "version": "1.0.0",
@@ -218,6 +223,14 @@
       "version": "1.0.0",
       "depth": 0,
       "source": "builtin",
+      "dependencies": {
+        "com.unity.modules.physicscore2d": "1.0.0"
+      }
+    },
+    "com.unity.modules.physicscore2d": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
       "dependencies": {}
     },
     "com.unity.modules.screencapture": {
@@ -274,7 +287,8 @@
         "com.unity.modules.imgui": "1.0.0",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.hierarchycore": "1.0.0",
-        "com.unity.modules.physics": "1.0.0"
+        "com.unity.modules.physics": "1.0.0",
+        "com.unity.modules.animation": "1.0.0"
       }
     },
     "com.unity.modules.umbra": {
@@ -364,16 +378,6 @@
         "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0"
-      }
-    },
-    "com.unity.modules.vr": {
-      "version": "1.0.0",
-      "depth": 0,
-      "source": "builtin",
-      "dependencies": {
-        "com.unity.modules.jsonserialize": "1.0.0",
-        "com.unity.modules.physics": "1.0.0",
-        "com.unity.modules.xr": "1.0.0"
       }
     },
     "com.unity.modules.wind": {
