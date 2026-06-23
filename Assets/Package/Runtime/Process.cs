@@ -75,7 +75,7 @@ namespace TSKT.Scenes
             operation.allowSceneActivation = true;
             if (progress != null)
             {
-                _ = ReportUtil.Report(operation, progress);
+                ReportUtil.Report(operation, progress).LogExceptionsAndForget();
             }
             await operation;
             var scene = SceneManager.GetSceneByName(sceneName);
@@ -144,7 +144,7 @@ namespace TSKT.Scenes
             {
                 if (progress != null)
                 {
-                    _ = ReportUtil.Report(singleSceneOperation, progress);
+                    ReportUtil.Report(singleSceneOperation, progress).LogExceptionsAndForget();
                 }
                 singleSceneOperation.allowSceneActivation = true;
                 await singleSceneOperation;
@@ -233,7 +233,7 @@ namespace TSKT.Scenes
                 var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Single);
                 if (progress != null)
                 {
-                    _ = ReportUtil.Report(loadOperation, progress);
+                    ReportUtil.Report(loadOperation, progress).LogExceptionsAndForget();
                 }
                 await loadOperation;
             }
@@ -243,7 +243,7 @@ namespace TSKT.Scenes
                 var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
                 if (progress != null)
                 {
-                    _ = ReportUtil.Report(loadOperation, progress);
+                    ReportUtil.Report(loadOperation, progress).LogExceptionsAndForget();
                 }
                 await loadOperation;
                 SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
