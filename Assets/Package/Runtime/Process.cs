@@ -70,13 +70,10 @@ namespace TSKT.Scenes
             return new Add(sceneName, loadOperation, changeActiveScene);
         }
 
-        public readonly async Awaitable<Scene> Execute(System.IProgress<float>? progress = null)
+        public readonly async Awaitable<Scene> Execute(Action<AsyncOperation>? beforeComplete = null)
         {
+            beforeComplete?.Invoke(operation);
             operation.allowSceneActivation = true;
-            if (progress != null)
-            {
-                ReportUtil.Report(operation, progress).LogExceptionsAndForget();
-            }
             await operation;
             var scene = SceneManager.GetSceneByName(sceneName);
             if (!scene.IsValid())
@@ -108,6 +105,7 @@ namespace TSKT.Scenes
             if (SceneManager.sceneCount == 1)
             {
                 var operation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+                operation.priority = 1;
                 operation.allowSceneActivation = false;
                 return new Switch(toUnload, default, operation);
             }
@@ -118,7 +116,7 @@ namespace TSKT.Scenes
             }
         }
 
-        public readonly async Awaitable Execute(bool waitUnload = true, System.IProgress<float>? progress = null)
+        public readonly async Awaitable Execute(bool waitUnload = true, System.Action<AsyncOperation>? beforeComplete = null)
         {
             foreach (var it in toUnload.GetRootGameObjects())
             {
@@ -127,7 +125,7 @@ namespace TSKT.Scenes
 
             if (singleSceneOperation == null)
             {
-                await add.Execute(progress);
+                await add.Execute(beforeComplete);
                 var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
 
                 if (waitUnload)
@@ -142,10 +140,7 @@ namespace TSKT.Scenes
             }
             else
             {
-                if (progress != null)
-                {
-                    ReportUtil.Report(singleSceneOperation, progress).LogExceptionsAndForget();
-                }
+                beforeComplete?.Invoke(singleSceneOperation);
                 singleSceneOperation.allowSceneActivation = true;
                 await singleSceneOperation;
             }
@@ -200,9 +195,9 @@ namespace TSKT.Scenes
             add = addScene;
         }
 
-        public readonly async Awaitable<Revertable> Execute(System.IProgress<float>? progress = null)
+        public readonly async Awaitable<Revertable> Execute(Action<AsyncOperation>? beforeComplete = null)
         {
-            var added = await add.Execute(progress);
+            var added = await add.Execute(beforeComplete);
             return new Revertable(added, toRevert, InactivateObjects.Inactivate(toRevert));
         }
 
@@ -224,45 +219,26 @@ namespace TSKT.Scenes
 
     public static class Reload
     {
-        public static async Awaitable Execute(Scene scene, System.IProgress<float>? progress = null)
+        public static async Awaitable Execute(Scene scene, Action<AsyncOperation>? beforeComplete = null)
         {
             var sceneIndex = scene.buildIndex;
 
             if (SceneManager.sceneCount == 1)
             {
                 var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Single);
-                if (progress != null)
-                {
-                    ReportUtil.Report(loadOperation, progress).LogExceptionsAndForget();
-                }
+                beforeComplete?.Invoke(loadOperation);
                 await loadOperation;
             }
             else
             {
                 await SceneManager.UnloadSceneAsync(scene);
                 var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
-                if (progress != null)
-                {
-                    ReportUtil.Report(loadOperation, progress).LogExceptionsAndForget();
-                }
+                beforeComplete?.Invoke(loadOperation);
                 await loadOperation;
                 SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
             }
             _ = Resources.UnloadUnusedAssets();
         }
 
-    }
-
-    static class ReportUtil
-    {
-        public static async Awaitable Report(AsyncOperation operation, System.IProgress<float> progress)
-        {
-            while (!operation.isDone)
-            {
-                progress.Report(operation.progress);
-                await Awaitable.NextFrameAsync();
-            }
-            progress.Report(1f);
-        }
     }
 }
