@@ -51,13 +51,13 @@ namespace TSKT.Scenes
     public readonly struct Add
     {
         readonly string sceneName;
-        readonly AsyncOperation operation;
+        public readonly AsyncOperation LoadOperation { get; }
         readonly bool changeActiveScene;
 
         Add(string sceneName, AsyncOperation operation, bool changeActiveScene)
         {
             this.sceneName = sceneName;
-            this.operation = operation;
+            LoadOperation = operation;
             this.changeActiveScene = changeActiveScene;
         }
 
@@ -70,11 +70,10 @@ namespace TSKT.Scenes
             return new Add(sceneName, loadOperation, changeActiveScene);
         }
 
-        public readonly async Awaitable<Scene> Execute(Action<AsyncOperation>? beforeComplete = null)
+        public readonly async Awaitable<Scene> Execute()
         {
-            beforeComplete?.Invoke(operation);
-            operation.allowSceneActivation = true;
-            await operation;
+            LoadOperation.allowSceneActivation = true;
+            await LoadOperation;
             var scene = SceneManager.GetSceneByName(sceneName);
             if (!scene.IsValid())
             {
@@ -93,6 +92,7 @@ namespace TSKT.Scenes
         readonly Scene toUnload;
         readonly Add add;
         readonly AsyncOperation? singleSceneOperation;
+        public AsyncOperation LoadOperation => singleSceneOperation ?? add.LoadOperation;
 
         Switch(Scene from, Add addScene, AsyncOperation? singleSceneOperation)
         {
@@ -116,7 +116,7 @@ namespace TSKT.Scenes
             }
         }
 
-        public readonly async Awaitable Execute(bool waitUnload = true, System.Action<AsyncOperation>? beforeComplete = null)
+        public readonly async Awaitable Execute(bool waitUnload = true)
         {
             foreach (var it in toUnload.GetRootGameObjects())
             {
@@ -125,7 +125,7 @@ namespace TSKT.Scenes
 
             if (singleSceneOperation == null)
             {
-                await add.Execute(beforeComplete);
+                await add.Execute();
                 var unloadTask = SceneManager.UnloadSceneAsync(toUnload);
 
                 if (waitUnload)
@@ -140,7 +140,6 @@ namespace TSKT.Scenes
             }
             else
             {
-                beforeComplete?.Invoke(singleSceneOperation);
                 singleSceneOperation.allowSceneActivation = true;
                 await singleSceneOperation;
             }
@@ -182,6 +181,7 @@ namespace TSKT.Scenes
 
         readonly Scene toRevert;
         readonly Add add;
+        public AsyncOperation LoadOperation => add.LoadOperation;
 
         public static SwitchWithRevertable Load(string sceneName, Scene currentScene)
         {
@@ -195,9 +195,9 @@ namespace TSKT.Scenes
             add = addScene;
         }
 
-        public readonly async Awaitable<Revertable> Execute(Action<AsyncOperation>? beforeComplete = null)
+        public readonly async Awaitable<Revertable> Execute()
         {
-            var added = await add.Execute(beforeComplete);
+            var added = await add.Execute();
             return new Revertable(added, toRevert, InactivateObjects.Inactivate(toRevert));
         }
 
