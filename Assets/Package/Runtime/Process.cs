@@ -102,19 +102,21 @@ namespace TSKT.Scenes
             return scene;
         }
 
-        public static async Awaitable Switch(string sceneName, Scene toUnload, Action<AsyncOperation>? onLoadStarted = null)
+        public static async Awaitable<Scene> Switch(string sceneName, Scene toUnload, Action<AsyncOperation>? onLoadStarted = null)
         {
             if (SceneManager.sceneCount == 1)
             {
                 var loadOperation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
                 onLoadStarted?.Invoke(loadOperation);
                 await loadOperation;
+                // LoadSceneMode.Singleの完了後は、ロードしたシーンだけが残ってアクティブになっている。
+                return SceneManager.GetActiveScene();
             }
             else
             {
                 await SceneManager.UnloadSceneAsync(toUnload);
                 await Resources.UnloadUnusedAssets();
-                await Add(sceneName, changeActiveScene: true, onLoadStarted);
+                return await Add(sceneName, changeActiveScene: true, onLoadStarted);
             }
         }
 
@@ -126,7 +128,7 @@ namespace TSKT.Scenes
             return new Revertable(added, toActivate: currentScene, inactivateds);
         }
 
-        public static async Awaitable Reload(Scene scene, Action<AsyncOperation>? onLoadStarted = null)
+        public static async Awaitable<Scene> Reload(Scene scene, Action<AsyncOperation>? onLoadStarted = null)
         {
             var sceneIndex = scene.buildIndex;
 
@@ -135,19 +137,24 @@ namespace TSKT.Scenes
                 var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Single);
                 onLoadStarted?.Invoke(loadOperation);
                 await loadOperation;
+                // LoadSceneMode.Singleの完了後は、ロードしたシーンだけが残ってアクティブになっている。
+                return SceneManager.GetActiveScene();
             }
             else
             {
                 var wasActive = SceneManager.GetActiveScene() == scene;
                 await SceneManager.UnloadSceneAsync(scene);
                 var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
+                // ロード中のシーンは末尾に追加される。
+                var reloaded = SceneManager.GetSceneAt(SceneManager.sceneCount - 1);
                 onLoadStarted?.Invoke(loadOperation);
                 await loadOperation;
                 if (wasActive)
                 {
-                    SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
+                    SceneManager.SetActiveScene(reloaded);
                 }
                 _ = Resources.UnloadUnusedAssets();
+                return reloaded;
             }
         }
 
