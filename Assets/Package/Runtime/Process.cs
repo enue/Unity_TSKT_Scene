@@ -48,9 +48,43 @@ namespace TSKT.Scenes
         }
     }
 
-    public static class Add
+    public readonly struct Revertable
     {
-        public static async Awaitable<Scene> Execute(string sceneName, bool changeActiveScene = true, Action<AsyncOperation>? onLoadStarted = null)
+        public readonly Scene toUnload;
+        public readonly Scene toActivate;
+        public readonly InactivateObjects shouldActivateObjects;
+
+        public Revertable(Scene toUnload, Scene toActivate, InactivateObjects shouldActivateObjects)
+        {
+            this.toUnload = toUnload;
+            this.toActivate = toActivate;
+            this.shouldActivateObjects = shouldActivateObjects;
+        }
+
+        public readonly async Awaitable Revert(bool waitUnload = false)
+        {
+            UnityEngine.Assertions.Assert.IsTrue(toUnload.IsValid(), "scene to unload is invalid.");
+
+            SceneManager.SetActiveScene(toActivate);
+            foreach (var it in toUnload.GetRootGameObjects())
+            {
+                it.SetActive(false);
+            }
+            var unloading = SceneManager.UnloadSceneAsync(toUnload);
+            if (waitUnload)
+            {
+                await unloading;
+            }
+
+            shouldActivateObjects.Activate();
+
+            _ = Resources.UnloadUnusedAssets();
+        }
+    }
+
+    public static class SceneLoader
+    {
+        public static async Awaitable<Scene> Add(string sceneName, bool changeActiveScene = true, Action<AsyncOperation>? onLoadStarted = null)
         {
             var loadOperation = SceneManager.LoadSceneAsync(
                 sceneName,
@@ -71,11 +105,8 @@ namespace TSKT.Scenes
             }
             return scene;
         }
-    }
 
-    public static class Switch
-    {
-        public static async Awaitable Execute(string sceneName, Scene toUnload, Action<AsyncOperation>? onLoadStarted = null)
+        public static async Awaitable Switch(string sceneName, Scene toUnload, Action<AsyncOperation>? onLoadStarted = null)
         {
             if (SceneManager.sceneCount == 1)
             {
@@ -87,59 +118,19 @@ namespace TSKT.Scenes
             {
                 await SceneManager.UnloadSceneAsync(toUnload);
                 await Resources.UnloadUnusedAssets();
-                await Add.Execute(sceneName, changeActiveScene: true, onLoadStarted);
-            }
-        }
-    }
-
-    public static class SwitchWithRevertable
-    {
-        public readonly struct Revertable
-        {
-            public readonly Scene toUnload;
-            public readonly Scene toActivate;
-            public readonly InactivateObjects shouldActivateObjects;
-
-            public Revertable(Scene toUnload, Scene toActivate, InactivateObjects shouldActivateObjects)
-            {
-                this.toUnload = toUnload;
-                this.toActivate = toActivate;
-                this.shouldActivateObjects = shouldActivateObjects;
-            }
-
-            public readonly async Awaitable Revert(bool waitUnload = false)
-            {
-                UnityEngine.Assertions.Assert.IsTrue(toUnload.IsValid(), "scene to unload is invalid.");
-
-                SceneManager.SetActiveScene(toActivate);
-                foreach (var it in toUnload.GetRootGameObjects())
-                {
-                    it.SetActive(false);
-                }
-                var unloading = SceneManager.UnloadSceneAsync(toUnload);
-                if (waitUnload)
-                {
-                    await unloading;
-                }
-
-                shouldActivateObjects.Activate();
-
-                _ = Resources.UnloadUnusedAssets();
+                await Add(sceneName, changeActiveScene: true, onLoadStarted);
             }
         }
 
-        public static async Awaitable<Revertable> Execute(string sceneName, Scene currentScene, Action<AsyncOperation>? onLoadStarted = null)
+        public static async Awaitable<Revertable> SwitchAsRevertable(string sceneName, Scene currentScene, Action<AsyncOperation>? onLoadStarted = null)
         {
             var inactivateds = InactivateObjects.Inactivate(currentScene);
-            var added = await Add.Execute(sceneName, changeActiveScene: true, onLoadStarted);
+            var added = await Add(sceneName, changeActiveScene: true, onLoadStarted);
 
             return new Revertable(added, toActivate: currentScene, inactivateds);
         }
-    }
 
-    public static class Reload
-    {
-        public static async Awaitable Execute(Scene scene, Action<AsyncOperation>? onLoadStarted = null)
+        public static async Awaitable Reload(Scene scene, Action<AsyncOperation>? onLoadStarted = null)
         {
             var sceneIndex = scene.buildIndex;
 
