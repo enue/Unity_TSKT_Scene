@@ -89,15 +89,11 @@ namespace TSKT.Scenes
             var loadOperation = SceneManager.LoadSceneAsync(
                 sceneName,
                 LoadSceneMode.Additive);
+            // ロード中のシーンは末尾に追加される。名前で検索すると、同名のシーンがロード済みの場合に取り違える。
+            var scene = SceneManager.GetSceneAt(SceneManager.sceneCount - 1);
             onLoadStarted?.Invoke(loadOperation);
 
             await loadOperation;
-
-            var scene = SceneManager.GetSceneByName(sceneName);
-            if (!scene.IsValid())
-            {
-                scene = SceneManager.GetSceneByPath(sceneName);
-            }
 
             if (changeActiveScene)
             {
@@ -142,13 +138,17 @@ namespace TSKT.Scenes
             }
             else
             {
+                var wasActive = SceneManager.GetActiveScene() == scene;
                 await SceneManager.UnloadSceneAsync(scene);
                 var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
                 onLoadStarted?.Invoke(loadOperation);
                 await loadOperation;
-                SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
+                if (wasActive)
+                {
+                    SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
+                }
+                _ = Resources.UnloadUnusedAssets();
             }
-            _ = Resources.UnloadUnusedAssets();
         }
 
     }
