@@ -50,12 +50,12 @@ namespace TSKT.Scenes
 
     public static class Add
     {
-        public static async Awaitable<Scene> Execute(string sceneName, bool changeActiveScene = true, Action<AsyncOperation>? beforeComplete = null)
+        public static async Awaitable<Scene> Execute(string sceneName, bool changeActiveScene = true, Action<AsyncOperation>? onLoadStarted = null)
         {
             var loadOperation = SceneManager.LoadSceneAsync(
                 sceneName,
                 LoadSceneMode.Additive);
-            beforeComplete?.Invoke(loadOperation);
+            onLoadStarted?.Invoke(loadOperation);
 
             await loadOperation;
 
@@ -75,19 +75,19 @@ namespace TSKT.Scenes
 
     public static class Switch
     {
-        public static async Awaitable Execute(string sceneName, Scene toUnload, Action<AsyncOperation>? beforeComplete = null)
+        public static async Awaitable Execute(string sceneName, Scene toUnload, Action<AsyncOperation>? onLoadStarted = null)
         {
             if (SceneManager.sceneCount == 1)
             {
                 var loadOperation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
-                beforeComplete?.Invoke(loadOperation);
+                onLoadStarted?.Invoke(loadOperation);
                 await loadOperation;
             }
             else
             {
                 await SceneManager.UnloadSceneAsync(toUnload);
                 await Resources.UnloadUnusedAssets();
-                await Add.Execute(sceneName, changeActiveScene: true, beforeComplete);
+                await Add.Execute(sceneName, changeActiveScene: true, onLoadStarted);
             }
         }
     }
@@ -128,10 +128,10 @@ namespace TSKT.Scenes
             }
         }
 
-        public static async Awaitable<Revertable> Execute(string sceneName, Scene currentScene, Action<AsyncOperation>? beforeComplete = null)
+        public static async Awaitable<Revertable> Execute(string sceneName, Scene currentScene, Action<AsyncOperation>? onLoadStarted = null)
         {
             var inactivateds = InactivateObjects.Inactivate(currentScene);
-            var added = await Add.Execute(sceneName, changeActiveScene: true, beforeComplete);
+            var added = await Add.Execute(sceneName, changeActiveScene: true, onLoadStarted);
 
             return new Revertable(added, toActivate: currentScene, inactivateds);
         }
@@ -139,21 +139,21 @@ namespace TSKT.Scenes
 
     public static class Reload
     {
-        public static async Awaitable Execute(Scene scene, Action<AsyncOperation>? beforeComplete = null)
+        public static async Awaitable Execute(Scene scene, Action<AsyncOperation>? onLoadStarted = null)
         {
             var sceneIndex = scene.buildIndex;
 
             if (SceneManager.sceneCount == 1)
             {
                 var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Single);
-                beforeComplete?.Invoke(loadOperation);
+                onLoadStarted?.Invoke(loadOperation);
                 await loadOperation;
             }
             else
             {
                 await SceneManager.UnloadSceneAsync(scene);
                 var loadOperation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
-                beforeComplete?.Invoke(loadOperation);
+                onLoadStarted?.Invoke(loadOperation);
                 await loadOperation;
                 SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(sceneIndex));
             }
